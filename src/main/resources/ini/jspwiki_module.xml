@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<modules>
+   <plugin class="de.jwi.jspwiki.migrate.Migrator">
+      <author>Jürgen Weber</author>
+      <minVersion>2.10.0</minVersion>
+   </plugin>
+</modules>
