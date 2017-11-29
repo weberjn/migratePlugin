@@ -27,23 +27,23 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Properties;
 
-import com.ecyrd.jspwiki.PageManager;
-import com.ecyrd.jspwiki.WikiContext;
-import com.ecyrd.jspwiki.WikiEngine;
-import com.ecyrd.jspwiki.WikiPage;
-import com.ecyrd.jspwiki.attachment.Attachment;
-import com.ecyrd.jspwiki.attachment.AttachmentManager;
-import com.ecyrd.jspwiki.event.WikiEngineEvent;
-import com.ecyrd.jspwiki.event.WikiEvent;
-import com.ecyrd.jspwiki.event.WikiEventListener;
-import com.ecyrd.jspwiki.event.WikiEventUtils;
-import com.ecyrd.jspwiki.plugin.InitializablePlugin;
-import com.ecyrd.jspwiki.plugin.PluginException;
-import com.ecyrd.jspwiki.plugin.WikiPlugin;
-import com.ecyrd.jspwiki.providers.BasicAttachmentProvider;
-import com.ecyrd.jspwiki.providers.VersioningFileProvider;
-import com.ecyrd.jspwiki.providers.WikiAttachmentProvider;
-import com.ecyrd.jspwiki.providers.WikiPageProvider;
+import org.apache.wiki.PageManager;
+import org.apache.wiki.WikiContext;
+import org.apache.wiki.WikiEngine;
+import org.apache.wiki.WikiPage;
+import org.apache.wiki.api.exceptions.PluginException;
+import org.apache.wiki.api.plugin.InitializablePlugin;
+import org.apache.wiki.api.plugin.WikiPlugin;
+import org.apache.wiki.attachment.Attachment;
+import org.apache.wiki.attachment.AttachmentManager;
+import org.apache.wiki.event.WikiEngineEvent;
+import org.apache.wiki.event.WikiEvent;
+import org.apache.wiki.event.WikiEventListener;
+import org.apache.wiki.event.WikiEventUtils;
+import org.apache.wiki.providers.BasicAttachmentProvider;
+import org.apache.wiki.providers.VersioningFileProvider;
+import org.apache.wiki.providers.WikiAttachmentProvider;
+import org.apache.wiki.providers.WikiPageProvider;
 
 
 
