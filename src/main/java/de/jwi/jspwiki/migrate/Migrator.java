@@ -21,11 +21,8 @@ package de.jwi.jspwiki.migrate;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
 import java.util.Properties;
-
-import javax.management.RuntimeErrorException;
 
 import org.apache.wiki.PageManager;
 import org.apache.wiki.WikiContext;
