@@ -18,6 +18,9 @@
 
 package de.jwi.jspwiki.migrate;
 
+import java.io.Closeable;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -31,13 +34,19 @@ import org.apache.wiki.WikiPage;
 import org.apache.wiki.api.exceptions.PluginException;
 import org.apache.wiki.api.plugin.InitializablePlugin;
 import org.apache.wiki.api.plugin.WikiPlugin;
+import org.apache.wiki.attachment.Attachment;
+import org.apache.wiki.attachment.AttachmentManager;
 import org.apache.wiki.event.WikiEngineEvent;
 import org.apache.wiki.event.WikiEvent;
 import org.apache.wiki.event.WikiEventListener;
 import org.apache.wiki.event.WikiEventUtils;
+import org.apache.wiki.providers.BasicAttachmentProvider;
+import org.apache.wiki.providers.VersioningFileProvider;
+import org.apache.wiki.providers.WikiAttachmentProvider;
 import org.apache.wiki.providers.WikiPageProvider;
 
-import de.jwi.jspwiki.git.GitFileProvider;
+
+
 
 public class Migrator implements WikiPlugin,InitializablePlugin,WikiEventListener
 {
@@ -64,7 +73,7 @@ public class Migrator implements WikiPlugin,InitializablePlugin,WikiEventListene
 	
 	}
 
-	public String execute(WikiContext context, Map<String, String> params) throws PluginException
+	public String execute(WikiContext context, @SuppressWarnings("rawtypes") Map map) throws PluginException
 	{
 		if (true)
 		{
@@ -78,7 +87,7 @@ public class Migrator implements WikiPlugin,InitializablePlugin,WikiEventListene
 		System.out.println("Migrator.actionPerformed()");
 		
 		Properties p = new Properties(wikiProperties);
-		p.put(GitFileProvider.PROP_PAGEDIR, wikiProperties.getProperty("de.jwi.jspwiki.git.migrate.Migrator.pageDir"));
+		//p.put(GitFileProvider.PROP_PAGEDIR, wikiProperties.getProperty("de.jwi.jspwiki.git.migrate.Migrator.pageDir"));
 		
 		try
 		{
@@ -92,16 +101,20 @@ public class Migrator implements WikiPlugin,InitializablePlugin,WikiEventListene
 
 	private void migrate(Properties properties) throws Exception
 	{
-		GitFileProvider gitFileProvider = new GitFileProvider();
-		gitFileProvider.initialize(engine, properties);
+		VersioningFileProvider versioningFileProvider = new VersioningFileProvider();
+		versioningFileProvider.initialize(engine, properties);
+		
+		BasicAttachmentProvider basicAttachmentProvider = new BasicAttachmentProvider();
+		basicAttachmentProvider.initialize(engine, properties);
 		
 		PageManager pageManager = engine.getPageManager();
-		Collection allPages = pageManager.getAllPages();
+		@SuppressWarnings("unchecked")
+		Collection<WikiPage> allPages = pageManager.getAllPages();
 		
-		Iterator it = allPages.iterator();
+		Iterator<WikiPage> it = allPages.iterator();
 		while (it.hasNext())
 		{
-			WikiPage p = (WikiPage)it.next();
+			WikiPage p = it.next();
 			
 			String pageName = p.getName();
 			
@@ -111,17 +124,76 @@ public class Migrator implements WikiPlugin,InitializablePlugin,WikiEventListene
 			
 			int v = 1;
 			
+			// migrate the versions of the page
 			while (v <= cv)
 			{
 				WikiPage pvi = pageManager.getPageInfo(pageName, v);
-				String content = pageManager.getPageText(pageName, v);
+				String content = pageManager.getPageText(pageName, v); // here
+				
+				try {
+					Thread.sleep(100); // too many open connections: sleep a bit
+				} catch (InterruptedException e) {
+					// nothing
+				}
 				
 				System.out.println(String.format("%04d/%d %s", v, cv, pageName));
 				
-				gitFileProvider.putPageText(pvi, content);
+				versioningFileProvider.putPageText(pvi, content);
 				
 				v++;
 			}				
+			
+		}
+		
+		// migrate attachments
+		AttachmentManager attachmentManager = engine.getAttachmentManager();
+		WikiAttachmentProvider attProvider = attachmentManager.getCurrentProvider();
+		@SuppressWarnings("unchecked")
+		Collection<Attachment> allAttachments = attachmentManager.getAllAttachments();
+		
+		Iterator<Attachment> attIt = allAttachments.iterator();
+		while (attIt.hasNext()) {
+			Attachment att = (Attachment) attIt.next();
+			
+			String attName = att.getName();
+			
+			int latestVersion = att.getVersion();
+			int currentVersion = 1;
+			
+			while (currentVersion <= latestVersion) {
+				Attachment attV = attachmentManager.getAttachmentInfo(
+						attName, currentVersion);
+				
+				InputStream attachmentData = null;
+				try  {
+					attachmentData = attProvider.getAttachmentData(attV);
+
+					System.out.println(String.format("%04d/%d %s", currentVersion, latestVersion, attName));
+
+					basicAttachmentProvider.putAttachmentData(att, attachmentData);
+				} finally {
+					close(attachmentData);
+				}
+				
+				try {
+					Thread.sleep(100); // too many open connections: sleep a bit
+				} catch (InterruptedException e) {
+					// nothing
+				}
+
+				
+				++currentVersion;
+			}
+		}
+	}
+
+	private void close(Closeable cl) {
+		if (cl != null) {
+			try {
+				cl.close();
+			} catch (IOException e) {
+				// ignore
+			}
 		}
 	}
 }
